@@ -55,7 +55,7 @@ export class OfxParser {
 
 
     try {
-      const account = await this.parseAccounts(body);
+      const account = await this.parseAccount(body);
       const statement = await this.parseStatement(body);
 
       return { account, statement };
