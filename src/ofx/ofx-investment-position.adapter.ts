@@ -9,7 +9,7 @@ export class OfxInvestmentPositionAdapter {
   public static convertToAccountPosition(
     statementResponse: OfxInvestmentStatementResponse
   ): PositionModel[] {
-    let positions = [];
+    let positions : PositionModel[] = [];
     if (statementResponse.INVPOSLIST) {
       if (statementResponse.INVPOSLIST.POSMF) {
         positions = positions.concat(

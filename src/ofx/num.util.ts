@@ -1,5 +1,5 @@
 export class NumUtil {
-  public static toFixed(num, fixed) {
+  public static toFixed(num: any, fixed: any) {
     if (!num) {
       return 0;
     }

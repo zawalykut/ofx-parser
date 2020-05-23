@@ -8,7 +8,7 @@ export class OfxDateUtil {
 
   public static OfxDateToDate(ofxDate: string): Date {
     if (!ofxDate) {
-      return undefined;
+      return new Date();
     }
     const year = parseInt(ofxDate.substr(0, 4), 10);
     const month = parseInt(ofxDate.substr(4, 2), 10) - 1;
