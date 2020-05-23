@@ -10,19 +10,20 @@ import { StatementModel } from '../statement.model';
 // import { OfxInvestmentPositionAdapter } from './ofx-investment-position.adapter';
 import * as Xml2JsParser from 'xml2js';
 import { AccountModel } from '../account.model';
-import { OfxAccountInfoAdapter } from './ofx-account-info.adapter';
 import { OfxStatementDateAdapter } from './ofx-statement-date.carbonator';
 import { createReadStream } from 'fs';
+import { OfxBankAccountAdapter } from './ofx-bank-account.adapter';
+
+export type OfxParserResult = {
+  account: AccountModel;
+  statement: StatementModel;
+}
 
 export class OfxParser {
   // Not currently working
   // Needs to be fixed and changed back to public
-  private async carbonateAccounts(xml: string): Promise<AccountModel[]> {
-    const body = await this.convertFromXML(xml);
-    // console.log('body', JSON.stringify(body));
-    return OfxAccountInfoAdapter.convertToAccountList(
-      body.OFX.SIGNUPMSGSRSV1.ACCTINFOTRNRS.ACCTINFORS.ACCTINFO
-    );
+  public async parseAccount(body: OfxBody): Promise<AccountModel> {
+    return OfxBankAccountAdapter.convertToAccount(undefined, body.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS.BANKACCTFROM);
   }
 
   private async readLocalFile(filePath: string) {
@@ -48,14 +49,19 @@ export class OfxParser {
    *
    * @param filePath path to a local file
    */
-  public async parseStatementFile(filePath: string): Promise<StatementModel> {
-    const ofxData = await this.readLocalFile(filePath) as string
+  public async parseStatementFile(filePath: string): Promise<OfxParserResult> {
+    const ofxData = await this.readLocalFile(filePath) as string;
+    const body = await this.convertFromXML(ofxData);
 
-    let result: StatementModel
+
     try {
-      result = await this.parseStatement(ofxData)
-      return result
-    } catch (err) {
+      const account = await this.parseAccounts(body);
+      const statement = await this.parseStatement(body);
+
+      return { account, statement };
+
+    }
+    catch (err) {
       console.error(err)
       return err
     }
@@ -66,12 +72,12 @@ export class OfxParser {
    * This function can be used to parse an Ofx from Google Storage for example.
    * For parsing a local file, just use the parseStatementFile()
    *
-   * @param xml A Readable Stream from a XML file
+   * @param body An OfxBody
    */
-  public async parseStatement(xml: string): Promise<StatementModel> {
-    const body = await this.convertFromXML(xml);
+  public async parseStatement(body: OfxBody): Promise<StatementModel> {
+
     let ledgerBalance: AccountBalanceModel;
-    let availableBalance: AccountBalanceModel;
+    let availableBalance: AccountBalanceModel = {};
     let transactions: TransactionModel[];
     let positions: PositionModel[];
     let statementDate: any = {}
@@ -130,14 +136,12 @@ export class OfxParser {
 
     return {
       ledgerBalance: ledgerBalance.balanceAmount,
-      availableBalance: availableBalance
-        ? availableBalance.balanceAmount
-        : undefined,
+      availableBalance: availableBalance ? availableBalance.balanceAmount : undefined,
       balanceAsOf: ledgerBalance.balanceAsOf,
       startDate: statementDate.start,
       endDate: statementDate.end,
       transactions: transactions,
-      positions: positions
+      //positions: positions
     };
   }
 
@@ -175,7 +179,7 @@ export class OfxParser {
       // console.debug('string to parse', xml);
       let json;
       const parser = new Xml2JsParser.Parser({ explicitArray: false });
-      parser.parseString(xml, (err, result) => {
+      parser.parseString(xml, (err: any, result: any) => {
         if (err) {
           reject(err);
         }
