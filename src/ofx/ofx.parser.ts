@@ -13,6 +13,7 @@ import { AccountModel } from '../account.model';
 import { OfxStatementDateAdapter } from './ofx-statement-date.carbonator';
 import { createReadStream } from 'fs';
 import { OfxBankAccountAdapter } from './ofx-bank-account.adapter';
+import { OfxCreditCardAccountAdapter } from './ofx-credit-card-account.adapter';
 
 export type OfxParserResult = {
   account: AccountModel;
@@ -20,10 +21,23 @@ export type OfxParserResult = {
 }
 
 export class OfxParser {
-  // Not currently working
-  // Needs to be fixed and changed back to public
+
   public async parseAccount(body: OfxBody): Promise<AccountModel> {
-    return OfxBankAccountAdapter.convertToAccount(undefined, body.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS.BANKACCTFROM);
+    let accountModel: AccountModel = {};
+
+    if (body.OFX.BANKMSGSRSV1) {
+      accountModel = OfxBankAccountAdapter.convertToAccount(undefined, body.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS.BANKACCTFROM);
+    }
+
+    else if(body.OFX.CREDITCARDMSGSRSV1)
+    {
+      accountModel = OfxCreditCardAccountAdapter.convertToAccount(undefined, body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.CCACCTFROM);
+    }
+    else {
+      throw new Error('Unknown account details detected.');
+    }
+
+    return accountModel;
   }
 
   private async readLocalFile(filePath: string) {
@@ -99,19 +113,19 @@ export class OfxParser {
         body.OFX.BANKMSGSRSV1.STMTTRNRS.STMTRS.BANKTRANLIST.STMTTRN
       );
     }
-    // else if (body.OFX.CREDITCARDMSGSRSV1) {
-    //   ledgerBalance = OfxAccountBalanceAdapter.convertToAccountBalance(
-    //     body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.LEDGERBAL
-    //   );
-    //   if (body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.AVAILBAL) {
-    //     availableBalance = OfxAccountBalanceAdapter.convertToAccountBalance(
-    //       body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.AVAILBAL
-    //     );
-    //   }
-    //   transactions = OfxStatementTransactionAdapter.convertTransactionList(
-    //     body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.BANKTRANLIST.STMTTRN
-    //   );
-    // }
+    else if (body.OFX.CREDITCARDMSGSRSV1) {
+      ledgerBalance = OfxAccountBalanceAdapter.convertToAccountBalance(
+        body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.LEDGERBAL
+      );
+      if (body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.AVAILBAL) {
+        availableBalance = OfxAccountBalanceAdapter.convertToAccountBalance(
+          body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.AVAILBAL
+        );
+      }
+      transactions = OfxStatementTransactionAdapter.convertTransactionList(
+        body.OFX.CREDITCARDMSGSRSV1.CCSTMTTRNRS.CCSTMTRS.BANKTRANLIST.STMTTRN
+      );
+    }
     // else if (body.OFX.INVSTMTMSGSRSV1) {
     //   ledgerBalance = OfxInvestmentBalanceAdapter.convertToAccountBalance(
     //     body.OFX.INVSTMTMSGSRSV1.INVSTMTTRNRS.INVSTMTRS
@@ -130,8 +144,7 @@ export class OfxParser {
     //   );
     // }
     else {
-      // console.error('Extrato Bancário não identificado', body.OFX);
-      throw new Error('Extrato Bancário não identificado');
+      throw new Error('Unknown statement details detected.');
     }
 
     return {

@@ -28,10 +28,7 @@ export interface OfxCreditCardMessage {
     CLTCOOKIE: string;
     CCSTMTRS: {
       CURDEF: string;
-      CCACCTFROM: {
-        ACCTID: string;
-        ACCTTYPE: string;
-      };
+      CCACCTFROM: OfxCreditCardAccountFrom
       BANKTRANLIST: {
         DTSTART: string;
         DTEND: string;
@@ -161,7 +158,7 @@ export interface OfxCreditCardAccount {
     SUPTXDL: string;
     XFERSRC: string;
     XFERDEST: string;
-    SVCSTATUS: 'AVAIL' | 'PEND' | 'ACTIVE';
+    SVCSTATUS: ServiceStatusType;
   };
 }
 
@@ -175,7 +172,7 @@ export interface OfxLoanAccount {
     SUPTXDL: string;
     XFERSRC: string;
     XFERDEST: string;
-    SVCSTATUS: 'AVAIL' | 'PEND' | 'ACTIVE';
+    SVCSTATUS: ServiceStatusType;
   };
 }
 
@@ -186,7 +183,7 @@ export interface OfxInvestmentAccount {
       ACCTID: string;
       BROKERID: string;
     };
-    SVCSTATUS: 'AVAIL' | 'PEND' | 'ACTIVE';
+    SVCSTATUS: ServiceStatusType;
     USPRODUCTTYPE: string;
   };
 }
@@ -280,4 +277,14 @@ export interface OfxPayee {
   STATE: string;
   POSTALCODE: string;
   PHONE: string;
+}
+
+export type AccountType = 'CHECKING' | 'SAVINGS' | 'MONEYMRKT' | 'CREDITLINE' | 'CD' | 'CREDITCARD' | 'INVESTMENT' | 'LOAN' | undefined;
+export type LoanAccountType = 'AUTO' | 'CONSUMER' | 'MORTGAGE' | 'COMMERCIAL' | 'STUDENT' | 'MILITARY' | 'SMB' | 'CONSTR' | 'HOMEEQUITY' | undefined;
+export type ServiceStatusType = 'AVAIL' | 'PEND' | 'ACTIVE' | undefined;
+
+
+export interface OfxCreditCardAccountFrom {
+  ACCTID: string;
+  ACCTKEY?: string
 }

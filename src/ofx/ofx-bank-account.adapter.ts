@@ -1,5 +1,5 @@
-import { AccountModel, AccountType, ServiceStatusType } from '../account.model';
-import { OfxBankAccount, OfxBankAccountFrom } from './ofx-body';
+import { AccountModel } from '../account.model';
+import { OfxBankAccount, OfxBankAccountFrom, AccountType, ServiceStatusType } from './ofx-body';
 
 export class OfxBankAccountAdapter {
   public static convertToAccount(
