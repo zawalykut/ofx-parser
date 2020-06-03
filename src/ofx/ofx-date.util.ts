@@ -6,9 +6,9 @@ export class OfxDateUtil {
     return `${year}${month}${day}`;
   }
 
-  public static OfxDateToDate(ofxDate: string): Date {
+  public static OfxDateToDate(ofxDate: string): Date | undefined {
     if (!ofxDate) {
-      return new Date();
+      return undefined;
     }
     const year = parseInt(ofxDate.substr(0, 4), 10);
     const month = parseInt(ofxDate.substr(4, 2), 10) - 1;
